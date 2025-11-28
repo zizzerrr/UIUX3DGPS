@@ -12,30 +12,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Upload, 
-  Copy, 
-  CheckCircle2, 
-  Truck, 
-  Battery, 
-  Gauge, 
-  Clock, 
-  MapPin,
-  Sparkles,
-  FileText,
-  AlertTriangle
-} from 'lucide-react';
 
 interface ExcelData {
   [key: string]: string;
 }
 
 const alertTypes = [
-  { value: 'towing', label: 'سحب', labelEn: 'Towing', icon: Truck },
-  { value: 'external battery disconnected', label: 'فصل البطارية', labelEn: 'Battery Disconnected', icon: Battery },
-  { value: 'overspeed', label: 'سرعة زائدة', labelEn: 'Overspeed', icon: Gauge },
-  { value: 'stop for 10 day', label: 'توقف 10 أيام', labelEn: 'Stop for 10 Days', icon: Clock },
-  { value: 'stop in geofence', label: 'توقف في منطقة جغرافية', labelEn: 'Stop in Geofence', icon: MapPin },
+  { value: 'towing', label: 'سحب', labelEn: 'Towing' },
+  { value: 'external battery disconnected', label: 'فصل البطارية', labelEn: 'Battery Disconnected' },
+  { value: 'overspeed', label: 'سرعة زائدة', labelEn: 'Overspeed' },
+  { value: 'stop for 10 day', label: 'توقف 10 أيام', labelEn: 'Stop for 10 Days' },
+  { value: 'stop in geofence', label: 'توقف في منطقة جغرافية', labelEn: 'Stop in Geofence' },
 ];
 
 export default function AlertCard() {
@@ -215,18 +202,12 @@ export default function AlertCard() {
     }
   };
 
-  const selectedAlertType = alertTypes.find(t => t.value === alertType);
-
   return (
-    <Card className="w-full max-w-lg mx-auto backdrop-blur-xl bg-card/90 border-primary/20 shadow-[0_20px_60px_rgba(0,212,255,0.15),0_8px_20px_rgba(0,0,0,0.4)] transition-all duration-500 hover:shadow-[0_25px_70px_rgba(0,255,200,0.2),0_10px_25px_rgba(0,0,0,0.5)]">
+    <Card className="w-full max-w-lg mx-auto backdrop-blur-xl bg-card/95 border-border/50 shadow-xl">
       <CardHeader className="text-center pb-2">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Sparkles className="w-6 h-6 text-primary animate-pulse" />
-          <CardTitle className="text-2xl font-bold bg-gradient-to-l from-primary via-secondary to-primary bg-clip-text text-transparent">
-            Clicklife GPS Alert
-          </CardTitle>
-          <Sparkles className="w-6 h-6 text-secondary animate-pulse" />
-        </div>
+        <CardTitle className="text-2xl font-bold text-foreground">
+          Clicklife GPS Alert
+        </CardTitle>
         <p className="text-muted-foreground text-sm">
           توليد رسائل تنبيه احترافية للمركبات
         </p>
@@ -234,8 +215,7 @@ export default function AlertCard() {
       
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-primary">
-            <Upload className="w-4 h-4" />
+          <Label className="text-foreground font-medium">
             رفع ملف TXT (المركبات والعملاء)
           </Label>
           <div 
@@ -243,14 +223,12 @@ export default function AlertCard() {
             className="relative group cursor-pointer"
             data-testid="file-upload-area"
           >
-            <div className="border-2 border-dashed border-primary/30 rounded-lg p-4 text-center transition-all duration-300 hover:border-primary/60 hover:bg-primary/5">
-              <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground group-hover:text-primary transition-colors" />
+            <div className="border-2 border-dashed border-border rounded-lg p-4 text-center transition-all duration-200 hover:border-primary hover:bg-muted/30">
               <p className="text-sm text-muted-foreground">
                 {fileLoaded ? `تم تحميل ${vehicleCount} مركبة` : 'اضغط لرفع ملف TXT'}
               </p>
               {fileLoaded && (
                 <Badge variant="secondary" className="mt-2">
-                  <CheckCircle2 className="w-3 h-3 ml-1" />
                   تم التحميل
                 </Badge>
               )}
@@ -270,15 +248,14 @@ export default function AlertCard() {
         </div>
 
         <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-primary">
-            <MapPin className="w-4 h-4" />
+          <Label className="text-foreground font-medium">
             بيانات التتبع
           </Label>
           <Textarea
             value={trackingData}
             onChange={(e) => setTrackingData(e.target.value)}
             placeholder="657014 Changan&#10;Address: New Industrial, Ajman, UAE&#10;Speed: 105 kph"
-            className="min-h-[120px] bg-background/50 border-border/50 focus:border-primary transition-all resize-none font-mono text-sm"
+            className="min-h-[120px] bg-muted/30 border-border focus:border-primary transition-colors resize-none font-mono text-sm"
             dir="ltr"
             data-testid="textarea-tracking-data"
           />
@@ -288,13 +265,12 @@ export default function AlertCard() {
         </div>
 
         <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-primary">
-            <AlertTriangle className="w-4 h-4" />
+          <Label className="text-foreground font-medium">
             نوع التنبيه
           </Label>
           <Select value={alertType} onValueChange={setAlertType}>
             <SelectTrigger 
-              className="bg-background/50 border-border/50 focus:border-primary"
+              className="bg-muted/30 border-border focus:border-primary"
               data-testid="select-alert-type"
             >
               <SelectValue placeholder="-- اختر نوع التنبيه --" />
@@ -306,11 +282,8 @@ export default function AlertCard() {
                   value={type.value}
                   data-testid={`select-item-${type.value}`}
                 >
-                  <div className="flex items-center gap-2">
-                    <type.icon className="w-4 h-4 text-primary" />
-                    <span>{type.label}</span>
-                    <span className="text-muted-foreground text-xs">({type.labelEn})</span>
-                  </div>
+                  <span>{type.label}</span>
+                  <span className="text-muted-foreground text-xs mr-2">({type.labelEn})</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -320,10 +293,9 @@ export default function AlertCard() {
         <div className="flex gap-3">
           <Button 
             onClick={generateAlert}
-            className="flex-1 bg-gradient-to-l from-primary to-secondary text-primary-foreground font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+            className="flex-1 font-medium"
             data-testid="button-generate-alert"
           >
-            <Sparkles className="w-4 h-4 ml-2" />
             توليد التنبيه
           </Button>
           
@@ -331,29 +303,18 @@ export default function AlertCard() {
             <Button
               onClick={copyAlert}
               variant="outline"
-              className="border-primary/50 hover:bg-primary/10"
               data-testid="button-copy-alert"
             >
-              {copied ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 ml-2 text-green-500" />
-                  تم النسخ
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 ml-2" />
-                  نسخ
-                </>
-              )}
+              {copied ? 'تم النسخ' : 'نسخ'}
             </Button>
           )}
         </div>
 
         {companyName && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
             <Badge 
               variant="secondary" 
-              className="w-full justify-center py-2 text-base bg-secondary/20 border border-secondary/30"
+              className="w-full justify-center py-2 text-base"
               data-testid="badge-company-name"
             >
               العميل: <span className="font-bold mr-1">{companyName}</span>
@@ -362,26 +323,17 @@ export default function AlertCard() {
         )}
 
         {alertOutput && (
-          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-500">
-            <Label className="flex items-center gap-2 text-primary">
-              <CheckCircle2 className="w-4 h-4" />
+          <div className="space-y-2">
+            <Label className="text-foreground font-medium">
               النتيجة
             </Label>
             <Textarea
               value={alertOutput}
               readOnly
-              className="min-h-[140px] bg-background/30 border-primary/30 font-mono text-sm"
+              className="min-h-[140px] bg-muted/30 border-border font-mono text-sm"
               dir="ltr"
               data-testid="textarea-alert-output"
             />
-          </div>
-        )}
-
-        {selectedAlertType && (
-          <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-primary/10 border border-primary/20 animate-pulse">
-              <selectedAlertType.icon className="w-8 h-8 text-primary" />
-            </div>
           </div>
         )}
       </CardContent>
