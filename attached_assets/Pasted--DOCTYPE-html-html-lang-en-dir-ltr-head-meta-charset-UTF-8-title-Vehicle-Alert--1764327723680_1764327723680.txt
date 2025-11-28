@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehicle Alert | Clicklife GPS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: linear-gradient(135deg, #20232a 40%, #373e4c 100%);
+      color: #eee;
+      overflow-y: auto;
+      position: relative;
+      transition: background 0.5s;
+    }
+    .container {
+      background: #181818;
+      padding: 22px 14px 18px 14px;
+      margin-top: 32px;
+      border-radius: 8px;
+      box-shadow: 0 2px 14px 0 #2c2f36;
+      width: 95%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid #252728;
+    }
+    h2 { margin: 0 0 12px 0; color: #29ca8e; font-size: 1.7rem; font-weight:700;}
+    .subtitle {margin-bottom:18px;color: #8ca0b5;font-size:1.07rem;}
+    label {color: #b6f4f3;font-size:1.01rem; margin-top:13px;}
+    .hint {color: #62f1d6; font-size:0.93rem;}
+    textarea, select, input[type="file"] {
+      width: 100%; margin-top:5px; margin-bottom:6px;
+      border-radius: 5px; border: 1px solid #444e51;
+      font-size: 1rem; padding: 7px; background: #232c33; color: #d6ecee;
+      font-family: Arial, sans-serif;
+      resize: vertical;
+    }
+    #alertOutput { min-height:80px;}
+    #copyBtn {margin-left:0;margin-top:5px;}
+    button {
+      margin: 10px 0 0 0; background: #29ca8e;color: #181818;
+      border: none; border-radius: 7px; padding: 8px 16px;
+      font-size: 1.04rem; font-family: Arial, sans-serif;
+      cursor: pointer; font-weight:500;
+      box-shadow: none;
+    }
+    button:active {background:#59deab;}
+    #companyName {
+      display: none;
+      font-size:1.06rem;
+      margin-bottom:7px;
+      color:#eee;
+      background: #232c33;
+      padding:4px 12px;
+      border-radius:5px;
+      font-weight:600;
+      border: 1px solid #1b2226;
+    }
+    .resultRow {width:100%; margin-top:14px;}
+    @media (max-width:600px) {
+      .container {max-width:100%; width:98%;}
+      h2 {font-size:1.19rem;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Clicklife GPS Alert</h2>
+    <div class="subtitle">Generate a professional vehicle alert message.</div>
+    <!-- TXT Upload Field -->
+    <label for="txtUpload">Upload TXT File (Vehicle & Client):</label>
+    <input type="file" id="txtUpload" accept=".txt">
+    <span class="hint">
+      ارفع ملف TXT بنفس النموذج الذي أرسلته:
+      <br>Vehicle[Tab]Client<br>ثم في كل سطر بيانات سيارة وعميل.
+    </span>
+    <div id="companyName"></div>
+    <label for="trackingData">Tracking Data:</label>
+    <span class="hint">قم بلصق بيانات تتبع العربية من النظام هنا.</span>
+    <textarea id="trackingData" placeholder="Example:&#10;657014 Changan&#10;Address: New Industrial, Ajman, UAE&#10;Speed: 105 kph"></textarea>
+    <label for="alertType">Alert Type:</label>
+    <select id="alertType">
+      <option value="">-- Select alert type --</option>
+      <option value="towing">Towing</option>
+      <option value="external battery disconnected">External Battery Disconnected</option>
+      <option value="overspeed">Overspeed</option>
+      <option value="stop for 10 day">Stop for 10 Day</option>
+      <option value="stop in geofence">Stop in Geofence</option>
+    </select>
+    <button onclick="generateAlert()" id="genBtn">Generate Alert</button>
+    <button onclick="copyAlert()" id="copyBtn" style="display:none;">Copy Alert</button>
+    <div class="resultRow">
+      <label for="alertOutput">Result:</label>
+      <textarea id="alertOutput" readonly></textarea>
+    </div>
+  </div>
+<script>
+// تخزين معلومات txt (Vehicle: Client)
+let excelData = {};
+
+// تحميل من LocalStorage لو متخزن من قبل
+if (localStorage.getItem('excelData')) {
+    try {
+        excelData = JSON.parse(localStorage.getItem('excelData')) || {};
+    } catch (e) { excelData = {}; }
+}
+
+// دعم رفع ملف TXT فقط
+document.getElementById('txtUpload').addEventListener('change', function(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/);
+    excelData = {};
+    let headerSkip = false;
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i].trim();
+      if (!line) continue;
+      // أول سطر عنوان غالباً
+      if (!headerSkip) {
+        if (line.toLowerCase().includes('vehicle') && line.toLowerCase().includes('client')) {
+          headerSkip = true; // تجاهل الراس فقط
+          continue;
+        } else { headerSkip = true; } // لو ملف بدون رأس، عادي
+      }
+      // تقسيم السطر
+      let splitter = (line.indexOf('\t') !== -1) ? '\t' : (line.indexOf(',') !== -1 ? ',' : null);
+      let parts = splitter ? line.split(splitter) : line.split(/\s{2,}/); // جرب تقسيم بـtab أو فاصلة أو فراغ مزدوج
+      // نظف الرقم بشكل جيد
+      let vehicle = (parts[0] || '').replace(/[^A-Za-z0-9]/g, '').replace(/\*/g, "").trim().toLowerCase();
+      let client = (parts[1] || '').trim();
+      if(vehicle) {
+        excelData[vehicle] = client || 'UNKNOWN CLIENT';
+        // أيضاً أضف السطر الأصلي لمزيد من المرونة في المطابقة
+        excelData[parts[0].toLowerCase().trim()] = client || 'UNKNOWN CLIENT';
+      }
+    }
+    localStorage.setItem('excelData', JSON.stringify(excelData)); // حفظ البيانات
+    alert('TXT data loaded: ' + Object.keys(excelData).length + ' vehicle(s)');
+  };
+  reader.readAsText(file);
+});
+
+// نفس الدوال القديمة بعد حذف دعم XLSX
+
+function getPlate(tracking) {
+    let addressIdx = tracking.indexOf("Address:");
+    let vehicleLine = (addressIdx !== -1) ? tracking.substring(0, addressIdx).replace(/\n/g,"").trim() : tracking.split('\n')[0];
+    let plateMatch = vehicleLine.match(/^[^\s-]*/);
+    let plate = plateMatch ? plateMatch[0].replace(/\*/g,"") : vehicleLine.split(/\s+/)[0] || "";
+    return plate.trim();
+}
+
+function getCompany(plate, tracking) {
+    let normalizedPlate = plate.trim().toLowerCase();
+    let cleanPlate = normalizedPlate.replace(/[^A-Za-z0-9]/g, '');
+    if(excelData.hasOwnProperty(cleanPlate)) return excelData[cleanPlate];
+    if(excelData.hasOwnProperty(normalizedPlate)) return excelData[normalizedPlate];
+    let firstLine = tracking.split('\n')[0].trim().toLowerCase();
+    if(excelData.hasOwnProperty(firstLine)) return excelData[firstLine];
+    for (let key in excelData) {
+      let keyClean = key.replace(/[^A-Za-z0-9]/g, '');
+      if (keyClean == cleanPlate) return excelData[key];
+    }
+    return 'UNKNOWN CLIENT';
+}
+
+function generateAlert() {
+    let tracking = document.getElementById('trackingData').value;
+    let alertType = document.getElementById('alertType').value;
+    if (!tracking || !alertType) { alert('Please enter tracking data and select alert type.'); return; }
+    let plate = getPlate(tracking);
+    let companyName = getCompany(plate, tracking);
+    let addressIdx = tracking.indexOf("Address:");
+    let vehicleLine = (addressIdx !== -1) ? tracking.substring(0, addressIdx).replace(/\n/g,"").trim() : tracking.split('\n')[0];
+    let modelColor = vehicleLine.replace(plate, '').trim();
+    let addressMatch = tracking.match(/Address:\s*(.+)/);
+    let address = addressMatch ? addressMatch[1].trim() : "";
+    let latMatch = tracking.match(/Latitude:\s*([0-9\.\-]+)/);
+    let lngMatch = tracking.match(/Longitude:\s*([0-9\.\-]+)/);
+    let latitude = latMatch ? latMatch[1] : "";
+    let longitude = lngMatch ? lngMatch[1] : "";
+    let typeText = "";
+    if(alertType === "overspeed") {
+        let speedMatch = tracking.match(/Speed:\s*([0-9\.]+)\s*kph?/i);
+        let speed = speedMatch ? speedMatch[1] : "";
+        typeText = speed ? `was speeding ${speed} kph` : "was speeding";
+    } else {
+        switch (alertType) {
+            case "towing": typeText = "was on recovery"; break;
+            case "external battery disconnected": typeText = "had the external battery disconnected"; break;
+            case "stop for 10 day": typeText = "has stopped for 10 days"; break;
+            case "stop in geofence": typeText = "has stopped in geofence"; break;
+            default: typeText = "had an event";
+        }
+    }
+    let vehicleDesc = `${companyName} ${plate} ${modelColor}`.replace(/\s+/g, ' ').trim();
+    let msg = [
+        `Hello, your vehicle has an event,`,
+        `${vehicleDesc} ${typeText} (${address})`,
+        (latitude && longitude) ? `https://www.google.com/maps?q=${latitude},${longitude}` : '',
+        "Clicklife GPS System"
+    ].filter(Boolean).join('\n\n');
+    document.getElementById('alertOutput').value = msg;
+    let companyField = document.getElementById('companyName');
+    companyField.innerHTML = 'Client: <b>' + companyName + '</b>';
+    companyField.style.display = 'block';
+    document.getElementById('copyBtn').style.display = 'inline-block';
+}
+
+function copyAlert() {
+    let output = document.getElementById('alertOutput');
+    output.select();
+    document.execCommand("copy");
+    document.getElementById('copyBtn').textContent = "Copied!";
+    setTimeout(()=>{document.getElementById('copyBtn').textContent = "Copy Alert";}, 1100);
+}
+</script>
+</body>
+</html>
